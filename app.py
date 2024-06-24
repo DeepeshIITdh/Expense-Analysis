@@ -26,6 +26,7 @@ if uploaded_file != None:
 
         debit_df, credit_df = helper.expense_over_timeline('output.csv')
         df = pd.concat([debit_df, credit_df], axis=0).sort_values('Datetime',ascending=False)
+        df['Type'] = df['Type'].apply(lambda x: x.lower())
 
         if user_analysis == 'Overall Analysis':
             st.title('Overall Analysis')
@@ -53,13 +54,14 @@ if uploaded_file != None:
             fig = px.bar(df, x='Datetime', y='Amount', color='Type', color_discrete_sequence=['#1f77b4','#ff7f0e'])
             st.plotly_chart(fig)
 
-        if user_analysis=='Yearly Analysis':
+        elif user_analysis=='Yearly Analysis':
             # title
             st.title('Yearly Analysis')
+
             yearly_expense = []
             for year in sorted(df['year'].unique()):
-                debit_amount = df[(df['year']==year) & ((df['Type']=='DEBIT') | (df['Type']=='Debit'))]['Amount'].sum() # debit amount
-                credit_amount = df[(df['year']==year) & ((df['Type']=='CREDIT')| (df['Type']=='Credit'))]['Amount'].sum() # credit amount
+                debit_amount = df[(df['year']==year) & (df['Type']=='debit')]['Amount'].sum() # debit amount
+                credit_amount = df[(df['year']==year) & (df['Type']=='credit')]['Amount'].sum() # credit amount
                 yearly_expense.extend([(year, 'debit', debit_amount),
                                         (year, 'credit', credit_amount),
                                         (year, 'total', abs(credit_amount-debit_amount))])
@@ -72,7 +74,7 @@ if uploaded_file != None:
             
             # tabular data
             st.table(pd.DataFrame({
-                'year':yearly_expense_df['year'].unique(),
+                'Year':yearly_expense_df['year'].unique(),
                 'Debit':['₹ '+ str(i) for i in yearly_expense_df[yearly_expense_df['type']=='debit']['amount'].values],
                 'Credit':['₹ '+ str(i) for i in yearly_expense_df[yearly_expense_df['type']=='credit']['amount'].values],
                 'Total':['₹ '+ str(i) for i in yearly_expense_df[yearly_expense_df['type']=='total']['amount'].values]
@@ -82,7 +84,72 @@ if uploaded_file != None:
             fig = px.histogram(yearly_expense_df,x='year',y='amount',color='type',barmode='group')
             st.plotly_chart(fig)
 
+        elif user_analysis=='Monthly Analysis':
+            # title
+            st.title('Monthly Analysis')
+
+            monthly_expense = []
+            for year in sorted(df['year'].unique()):
+                for month in sorted(df[(df['year']==year)]['month'].unique()):
+                    debit_amount = df[(df['year']==year) & (df['Type']=='debit') & (df['month']==month)]['Amount'].sum() # debit amount
+                    credit_amount = df[(df['year']==year) & (df['Type']=='credit') & (df['month']==month)]['Amount'].sum() # credit amount
+                    x_label = str(year)+'_'+str(month)
+                    monthly_expense.extend([(x_label, 'debit', debit_amount),
+                                            (x_label, 'credit', credit_amount),
+                                            (x_label, 'total', abs(credit_amount-debit_amount))])
+                    
+
+            monthly_expense_df = pd.DataFrame({
+                        'year_month':[monthly_expense[i][0] for i in range(len(monthly_expense))],
+                        'type':[monthly_expense[i][1] for i in range(len(monthly_expense))],
+                        'amount':[monthly_expense[i][2] for i in range(len(monthly_expense))]
+                            })
+            
+            # tabular data
+            st.table(pd.DataFrame({
+                'Year_Month':monthly_expense_df['year_month'].unique(),
+                'Debit':['₹ '+ str(i) for i in monthly_expense_df[monthly_expense_df['type']=='debit']['amount'].values],
+                'Credit':['₹ '+ str(i) for i in monthly_expense_df[monthly_expense_df['type']=='credit']['amount'].values],
+                'Total':['₹ '+ str(i) for i in monthly_expense_df[monthly_expense_df['type']=='total']['amount'].values]
+            }))
+            
+            # plot for monthly expense
+            fig = px.histogram(monthly_expense_df,x='year_month',y='amount',color='type',barmode='group')
+            st.plotly_chart(fig)
+
+        elif user_analysis=='Weekly Analysis':
+            # title
+            st.title('Weekly Analysis')
+            
+            days_of_week = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+            weekly_expense = []
+
+            for day in days_of_week:
+                debit_amount = df[(df['day_of_week']==day) & (df['Type']=='debit')]['Amount'].sum() # debit amount
+                credit_amount = df[(df['day_of_week']==day) & (df['Type']=='credit')]['Amount'].sum() # credit amount
+                weekly_expense.extend([(day, 'debit', debit_amount),
+                                (day, 'credit', credit_amount),
+                                (day, 'total', abs(credit_amount-debit_amount))])
+                
+            weekly_expense_df = pd.DataFrame({
+                        'day':[weekly_expense[i][0] for i in range(len(weekly_expense))],
+                        'type':[weekly_expense[i][1] for i in range(len(weekly_expense))],
+                        'amount':[weekly_expense[i][2] for i in range(len(weekly_expense))]
+                            })
+            
+            # tabular data
+            st.table(pd.DataFrame({
+                'Day':weekly_expense_df['day'].unique(),
+                'Debit':['₹ '+ str(i) for i in weekly_expense_df[weekly_expense_df['type']=='debit']['amount'].values],
+                'Credit':['₹ '+ str(i) for i in weekly_expense_df[weekly_expense_df['type']=='credit']['amount'].values],
+                'Total':['₹ '+ str(i) for i in weekly_expense_df[weekly_expense_df['type']=='total']['amount'].values]
+            }))
+                
+            # plot for monthly expense
+            fig = px.histogram(weekly_expense_df,x='day',y='amount',color='type',barmode='group')
+            st.plotly_chart(fig)
+
         os.remove('output.csv')
 
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error in Reading PDF file: {e}")
