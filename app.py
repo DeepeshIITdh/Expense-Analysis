@@ -20,16 +20,30 @@ user_analysis = st.sidebar.radio(label='', options=('Overall Analysis', 'Yearly 
 if uploaded_file != None:
     try:
         if upi_app == 'PhonePe':
-            helper.transaction_pdf_to_csv_phonepe(pdf_path=uploaded_file)
+            time_interval = helper.transaction_pdf_to_csv_phonepe(pdf_path=uploaded_file)
         else:
             st.error(f'{upi_app} is not available')
 
         debit_df, credit_df = helper.expense_over_timeline('output.csv')
         df = pd.concat([debit_df, credit_df], axis=0).sort_values('Datetime',ascending=False)
         df['Type'] = df['Type'].apply(lambda x: x.lower())
+        
+        # giving user the choice of data selection
+        data_selection = st.selectbox('Select Transaction Amount limit:' ,['Use all Transactions','Customize Amount limit'])
+        
+        if data_selection == 'Customize Amount limit':
+            upper_limit, lower_limit = helper.find_outlier(column=df['Amount'])
+            max_limit = st.number_input(label='Max Limit',value=upper_limit)
+            min_limit = st.number_input(label='Min Limit',min_value=0, value=0)
+
+            # customize df
+            df = df[(df['Amount']<max_limit) & (df['Amount']>min_limit)]
+            debit_df = df[df['Type'].apply(lambda x: x in ['debit','Debit','DEBIT'])]
+            credit_df = df[df['Type'].apply(lambda x: x in ['credit','Credit','CREDIT'])]
 
         if user_analysis == 'Overall Analysis':
             st.title('Overall Analysis')
+            st.subheader(time_interval)
 
             # variables
             no_transactions = df.shape[0]

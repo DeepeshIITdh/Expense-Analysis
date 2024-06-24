@@ -50,7 +50,7 @@ def transaction_pdf_to_csv_phonepe(pdf_path):
                 date.append(word)
                 time.append(text_list[i + 1])
                 
-
+                
     # creating the DataFrame
     df = pd.DataFrame({
         'Date': date,
@@ -66,6 +66,8 @@ def transaction_pdf_to_csv_phonepe(pdf_path):
     # converting dataframe to csv
     df.to_csv('output.csv', index=False)
 
+    return time_interval
+
 
 def expense_over_timeline(csv_path):
     df = pd.read_csv(csv_path)
@@ -80,7 +82,14 @@ def expense_over_timeline(csv_path):
     df['day'] = df['Date'].dt.day
     df['day_of_week'] = df['Date'].dt.day_name()
 
-    debit_df = df[df['Type'] in ['Debit','DEBIT']]
-    credit_df = df[df['Type'] in ['Credit','CREDIT']]
+    debit_df = df[df['Type'].apply(lambda x: x in ['Debit','DEBIT'])]
+    credit_df = df[df['Type'].apply(lambda x: x in ['Credit','CREDIT'])]
 
     return debit_df, credit_df
+
+
+def find_outlier(column):
+    upper_limit=(column.describe()[6])+(1.5*(column.describe()[6]-column.describe()[4]))
+    lower_limit=(column.describe()[4])-(1.5*(column.describe()[6]-column.describe()[4]))
+    
+    return upper_limit,lower_limit
