@@ -37,12 +37,6 @@ if uploaded_file != None:
             credit_transactions = credit_df.shape[0]
             debit_amount = debit_df['Amount'].sum()
             credit_amount = credit_df['Amount'].sum()
-
-            # based_data = st.selectbox('Choose Data for Analysis',['Full Data','Customize Data using limits','Custom Data Selection'])
-            # if based_data=='Customize Data using limits':
-            #     min_limit = st.number_input('Min Limit', min_value=0, value=0, format='%d')
-            #     max_limit = st.number_input('Max Limit', format='%d')
-            #     df[(df['Amount']<max_limit) | (df['Amount']>min_limit)]
             
             # tabular data
             st.table(pd.DataFrame({
@@ -120,7 +114,7 @@ if uploaded_file != None:
         elif user_analysis=='Weekly Analysis':
             # title
             st.title('Weekly Analysis')
-            
+
             days_of_week = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
             weekly_expense = []
 
