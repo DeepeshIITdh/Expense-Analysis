@@ -76,6 +76,13 @@ def expense_over_timeline(csv_path):
     # If the date is in 'yyyy/mm/dd' format and time is in 'HH:MM:SS' format
     df['Datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], format='%Y-%m-%d %H:%M:%S')
 
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    df['year'] = df['Date'].dt.year
+    df['month'] = df['Date'].dt.month
+    df['day'] = df['Date'].dt.day
+    df['day_of_week'] = df['Date'].dt.day_name()
+
     debit_df = df[(df['Type'] == 'DEBIT') | (df['Type'] == 'Debit')]
     credit_df = df[(df['Type'] == 'CREDIT') | (df['Type'] == 'Credit')]
 
