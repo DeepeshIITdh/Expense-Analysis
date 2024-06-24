@@ -7,8 +7,6 @@ def transaction_pdf_to_csv_phonepe(pdf_path):
     # creating list for the columns of DataFrame
     date = []
     time = []
-    name_details = []
-    account_used = []
     payment_type = []
     amount = []
 
@@ -33,31 +31,30 @@ def transaction_pdf_to_csv_phonepe(pdf_path):
         for i, word in enumerate(text_list):
             if ('₹' in word) or ('INR' in word) or ('Rs' in word):
                 # appending elements to their resp. lists
-                amount.append(word)
                 indi_name_detail = text_list[i + 1]
                 indi_payment_type = text_list[i - 1]
-                name_details.append(indi_name_detail)
-                payment_type.append(indi_payment_type)
+                if indi_payment_type in ['debit','credit','DEBIT','CREDIT','Debit','Credit']:
+                    payment_type.append(indi_payment_type)
+                    amount.append(word)
 
-                # remove the extracted words from the text list
-                text_list.remove(word)
-                text_list.remove(indi_name_detail)
-                text_list.remove(indi_payment_type)
+                    # remove the extracted words from the text list
+                    text_list.remove(word)
+                    text_list.remove(indi_name_detail)
+                    text_list.remove(indi_payment_type)
+                else:
+                    text_list.remove(word)
 
         # extracting date, time, account_used column
         for [i, word] in enumerate(text_list):
             if ',' in word:
                 date.append(word)
                 time.append(text_list[i + 1])
-            elif 'X' * 5 in word:
-                account_used.append(word)
+                
 
     # creating the DataFrame
     df = pd.DataFrame({
         'Date': date,
         'Time': time,
-        'name_details': name_details,
-        'Account_used': account_used,
         'Type': payment_type,
         'Amount': amount
     })
@@ -83,7 +80,7 @@ def expense_over_timeline(csv_path):
     df['day'] = df['Date'].dt.day
     df['day_of_week'] = df['Date'].dt.day_name()
 
-    debit_df = df[(df['Type'] == 'DEBIT') | (df['Type'] == 'Debit')]
-    credit_df = df[(df['Type'] == 'CREDIT') | (df['Type'] == 'Credit')]
+    debit_df = df[df['Type'] in ['Debit','DEBIT']]
+    credit_df = df[df['Type'] in ['Credit','CREDIT']]
 
     return debit_df, credit_df
